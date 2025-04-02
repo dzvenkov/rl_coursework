@@ -1,0 +1,9 @@
+tqdm==4.67.1
+matplotlib==3.7.2
+numpy==1.26.4
+ipykernel==6.29.5
+stable-baselines3
+gymnasium[box2d, atari,accept-rom-license]==0.29.1
+opencv-python
+tensorboard
+imageio[ffmpeg]
