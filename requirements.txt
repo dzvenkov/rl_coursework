@@ -7,3 +7,4 @@ gymnasium[box2d, atari,accept-rom-license]==0.29.1
 opencv-python
 tensorboard
 imageio[ffmpeg]
+pygame
