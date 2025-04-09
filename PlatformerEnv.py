@@ -294,8 +294,11 @@ class PlatformerEnv(gym.Env):
 
         # Handle coin collection.
         coins_collected = pygame.sprite.spritecollide(self.player, self.current_level.coin_list, True)
-        for _ in coins_collected:
+
+        coins_reward = 0
+        for coin in coins_collected:
             self.score += 1
+            coins_reward += (600 - coin.rect.y)/3  # Reward based on height of the coin.
             platform = random.choice(self.current_level.platform_list.sprites())
             x = platform.rect.x + random.randint(10, max(10, platform.rect.width - 10))
             y = platform.rect.y - 25
@@ -323,7 +326,7 @@ class PlatformerEnv(gym.Env):
                 self.done = True
 
         observation = self.render("rgb_array")
-        reward = self.score  # Adjust reward scheme as needed.
+        reward = self.score + coins_reward 
         return observation, reward, self.done, False, {"score": self.score}
 
     def render(self, mode="rgb_array"):
