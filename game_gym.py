@@ -7,11 +7,10 @@ import numpy as np
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
-
 def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Platformer with Coins (Multi-Key Gym Env)")
+    pygame.display.set_caption("Platformer with Coins (Discrete Gym Env)")
 
     # Create an instance of the environment.
     env = PlatformerEnv(screen_w=SCREEN_WIDTH, screen_h=SCREEN_HEIGHT)
@@ -33,11 +32,29 @@ def main():
 
         # Obtain the current key state.
         keys = pygame.key.get_pressed()
-        # Action vector: [left, right, jump]
-        action = np.array([keys[pygame.K_LEFT], keys[pygame.K_RIGHT], keys[pygame.K_UP]], dtype=np.int8)
+        left = keys[pygame.K_LEFT]
+        right = keys[pygame.K_RIGHT]
+        jump = keys[pygame.K_UP]
+
+        # Determine the discrete action based on key presses.
+        # The available actions are:
+        # 0: NOOP, 1: LEFT, 2: RIGHT, 3: JUMP, 4: JUMP_LEFT, 5: JUMP_RIGHT
+        if jump:
+            if left:
+                action = 4  # JUMP_LEFT
+            elif right:
+                action = 5  # JUMP_RIGHT
+            else:
+                action = 3  # JUMP
+        else:
+            if left and not right:
+                action = 1  # LEFT
+            elif right and not left:
+                action = 2  # RIGHT
+            else:
+                action = 0  # NOOP
 
         observation, reward, env_done, _, info = env.step(action)
-        # If env_done is True, we break out.
         if env_done:
             done = True
 
@@ -48,7 +65,6 @@ def main():
         clock.tick(60)
 
     env.close()
-
 
 if __name__ == "__main__":
     main()

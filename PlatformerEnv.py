@@ -221,7 +221,7 @@ class Level_01(Level):
 # --- Gymnasium Environment Wrapper ---
 
 class PlatformerEnv(gym.Env):
-    """Custom Gymnasium environment for the platformer game with multi-key support."""
+    """Custom Gymnasium environment for the platformer game with discrete action space."""
     metadata = {'render.modes': ['human', 'rgb_array']}
 
     def __init__(self, screen_w, screen_h):
@@ -229,9 +229,9 @@ class PlatformerEnv(gym.Env):
         self.screen_w = screen_w
         self.screen_h = screen_h
 
-        # Define a multi-key action space:
-        # action[0]: left, action[1]: right, action[2]: jump.
-        self.action_space = gym.spaces.MultiBinary(3)
+        # Define a discrete action space with 6 actions:
+        # 0: NOOP, 1: LEFT, 2: RIGHT, 3: JUMP, 4: JUMP_LEFT, 5: JUMP_RIGHT
+        self.action_space = gym.spaces.Discrete(6)
         # The observation is an RGB image (height, width, 3)
         self.observation_space = gym.spaces.Box(low=0, high=255,
                                                 shape=(self.screen_h, self.screen_w, 3), dtype=np.uint8)
@@ -257,6 +257,9 @@ class PlatformerEnv(gym.Env):
         pygame.font.init()
         self.font = pygame.font.SysFont("Arial", 28)
 
+    def get_action_meanings(self):
+        return ["NOOP", "LEFT", "RIGHT", "JUMP", "JUMP_LEFT", "JUMP_RIGHT"]
+
     def reset(self, *, seed=None, options=None):
         self.done = False
         self.score = 0
@@ -272,20 +275,23 @@ class PlatformerEnv(gym.Env):
         return self.render("rgb_array"), {}
 
     def step(self, action):
-        # Process multi-key actions.
-        # action is expected as a vector of length 3: [left, right, jump].
-        left, right, jump = action[0], action[1], action[2]
+        # Reset horizontal movement.
+        self.player.change_x = 0
 
-        # Update horizontal movement based on the key state.
-        if left and not right:
-            self.player.change_x = -6
-        elif right and not left:
-            self.player.change_x = 6
-        else:
-            self.player.change_x = 0
-
-        # Process jump key.
-        if jump:
+        # Interpret the discrete action.
+        if action == 0:  # NOOP
+            pass
+        elif action == 1:  # LEFT
+            self.player.go_left()
+        elif action == 2:  # RIGHT
+            self.player.go_right()
+        elif action == 3:  # JUMP
+            self.player.jump()
+        elif action == 4:  # JUMP_LEFT
+            self.player.go_left()
+            self.player.jump()
+        elif action == 5:  # JUMP_RIGHT
+            self.player.go_right()
             self.player.jump()
 
         # Update game objects.
@@ -294,18 +300,17 @@ class PlatformerEnv(gym.Env):
 
         # Handle coin collection.
         coins_collected = pygame.sprite.spritecollide(self.player, self.current_level.coin_list, True)
-
         coins_reward = 0
         for coin in coins_collected:
             self.score += 1
-            coins_reward += (600 - coin.rect.y)/3  # Reward based on height of the coin.
+            coins_reward += (600 - coin.rect.y) / 3  # Reward based on coin height.
             platform = random.choice(self.current_level.platform_list.sprites())
             x = platform.rect.x + random.randint(10, max(10, platform.rect.width - 10))
             y = platform.rect.y - 25
             new_coin = Coin(x, y)
             self.current_level.coin_list.add(new_coin)
 
-        # Scrolling: shift the world if the player goes beyond set boundaries.
+        # Scrolling: shift the world if the player goes beyond boundaries.
         if self.player.rect.right >= 500:
             diff = self.player.rect.right - 500
             self.player.rect.right = 500
@@ -326,7 +331,7 @@ class PlatformerEnv(gym.Env):
                 self.done = True
 
         observation = self.render("rgb_array")
-        reward = self.score + coins_reward 
+        reward = self.score + coins_reward
         return observation, reward, self.done, False, {"score": self.score}
 
     def render(self, mode="rgb_array"):
