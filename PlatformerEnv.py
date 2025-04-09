@@ -221,13 +221,16 @@ class Level_01(Level):
 # --- Gymnasium Environment Wrapper ---
 
 class PlatformerEnv(gym.Env):
-    """Custom Gymnasium environment for the platformer game with discrete action space."""
+    """Custom Gymnasium environment for the platformer game with discrete action space,
+       a dummy ALE interface, and a frame limit for episodes."""
     metadata = {'render.modes': ['human', 'rgb_array']}
 
-    def __init__(self, screen_w, screen_h):
+    def __init__(self, screen_w, screen_h, max_frames=3600):
         super().__init__()
         self.screen_w = screen_w
         self.screen_h = screen_h
+        self.max_frames = max_frames  # Maximum frames per episode (default 60 sec * 60 fps)
+        self.frame_count = 0
 
         # Define a discrete action space with 6 actions:
         # 0: NOOP, 1: LEFT, 2: RIGHT, 3: JUMP, 4: JUMP_LEFT, 5: JUMP_RIGHT
@@ -253,9 +256,17 @@ class PlatformerEnv(gym.Env):
         self.active_sprite_list = pygame.sprite.Group()
         self.active_sprite_list.add(self.player)
 
-        # Initialize font for score rendering.
+        # Initialize font for score and timer rendering.
         pygame.font.init()
         self.font = pygame.font.SysFont("Arial", 28)
+
+    @property
+    def ale(self):
+        # Provide a dummy Arcade Learning Environment interface.
+        class DummyALE:
+            def lives(self):
+                return 1
+        return DummyALE()
 
     def get_action_meanings(self):
         return ["NOOP", "LEFT", "RIGHT", "JUMP", "JUMP_LEFT", "JUMP_RIGHT"]
@@ -272,9 +283,15 @@ class PlatformerEnv(gym.Env):
         self.player.change_y = 0
         self.active_sprite_list.empty()
         self.active_sprite_list.add(self.player)
+        self.frame_count = 0  # Reset frame counter
         return self.render("rgb_array"), {}
 
     def step(self, action):
+        # Increment frame counter.
+        self.frame_count += 1
+        if self.frame_count >= self.max_frames:
+            self.done = True
+
         # Reset horizontal movement.
         self.player.change_x = 0
 
@@ -340,8 +357,14 @@ class PlatformerEnv(gym.Env):
         # Draw the level and active sprites.
         self.current_level.draw(self.render_surface)
         self.active_sprite_list.draw(self.render_surface)
+        # Render score text.
         score_text = self.font.render(f"Score: {self.score}", True, WHITE)
         self.render_surface.blit(score_text, (20, 20))
+        # Compute time left in seconds (assuming 60 FPS).
+        time_left = max(0, (self.max_frames - self.frame_count) // 60)
+        timer_text = self.font.render(f"Time Left: {time_left} sec", True, WHITE)
+        # Blit the timer next to the score (for example, just below it).
+        self.render_surface.blit(timer_text, (20, 60))
         if mode == "rgb_array":
             arr = pygame.surfarray.array3d(self.render_surface)
             return np.transpose(arr, (1, 0, 2))
