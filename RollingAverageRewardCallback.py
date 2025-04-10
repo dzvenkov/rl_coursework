@@ -1,0 +1,26 @@
+from stable_baselines3.common.callbacks import BaseCallback
+
+class RollingAverageRewardCallback(BaseCallback):
+    def __init__(self, rolling_window=100, verbose=0):
+        super().__init__(verbose)
+        self.rolling_window = rolling_window  # Number of episodes to consider in the rolling average
+        self.episode_rewards = []
+
+    def _on_step(self) -> bool:
+        # Get the infos dictionary that might have 'episode' key if an episode finished
+        infos = self.locals.get("infos")
+        if infos is not None:
+            for info in infos:
+                # When using monitor or AtariWrapper, info sometimes contains an "episode" key with summary stats.
+                if "episode" in info.keys():
+                    # Grab the episodic reward (e.g., info["episode"]["r"])
+                    episode_reward = info["episode"]["r"]
+                    self.episode_rewards.append(episode_reward)
+                    # Ensure the rolling window contains at most `rolling_window` entries
+                    if len(self.episode_rewards) > self.rolling_window:
+                        self.episode_rewards.pop(0)
+                    # Compute the rolling average of the episode rewards
+                    rolling_avg = sum(self.episode_rewards) / len(self.episode_rewards)
+                    # Log the rolling average to TensorBoard under the tag 'roll_avg/episode_reward'
+                    self.logger.record("roll_avg/episode_reward", rolling_avg)
+        return True
