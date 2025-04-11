@@ -10,7 +10,7 @@ from RollingAverageRewardCallback import RollingAverageRewardCallback
 # Setup environment
 
 def make_env():
-    env = PlatformerEnv(screen_w=800, screen_h=600, max_frames=1200)
+    env = PlatformerEnv(screen_w=800, screen_h=600, max_frames=1000)
     env = AtariWrapper(env)
     return env
 

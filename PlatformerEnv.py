@@ -137,7 +137,8 @@ class Level(object):
         self.player = player
         self.background = None
         self.world_shift = 0
-        self.level_limit = -1000
+        self.level_limit_left = 300
+        self.level_limit_right = 1800
 
     def update(self):
         self.platform_list.update()
@@ -152,6 +153,8 @@ class Level(object):
 
     def shift_world(self, shift_x):
         self.world_shift += shift_x
+        self.level_limit_left += shift_x
+        self.level_limit_right += shift_x
         for platform in self.platform_list:
             platform.rect.x += shift_x
         for enemy in self.enemy_list:
@@ -171,12 +174,16 @@ class Level(object):
 class Level_01(Level):
     def __init__(self, player):
         Level.__init__(self, player)
-        self.level_limit = -1500
+        self.level_limit_left = 300
+        self.level_limit_right = 1800
         level = [[210, 70, 500, 500],
                  [210, 70, 800, 400],
                  [210, 70, 1000, 500],
                  [210, 70, 1120, 280],
                  [150, 70, 700, 150],
+                 # borders
+                 [500, 1000, -300, 0],
+                 [500, 1000, 1900, 0],
                 ]
         for platform in level:
             block = Platform(platform[0], platform[1])
@@ -274,6 +281,10 @@ class PlatformerEnv(gym.Env):
     def reset(self, *, seed=None, options=None):
         self.done = False
         self.score = 0
+        self.total_reward = 0
+        self.total_cf = 0
+        self.total_pf = 0
+        self.total_bf = 0
         self.current_level_no = 0
         self.current_level = self.level_list[self.current_level_no]
         self.player.level = self.current_level
@@ -341,16 +352,14 @@ class PlatformerEnv(gym.Env):
             # Use the closest coin distance.
             min_distance = min(distances)
             # Set a maximum distance threshold (adjust as needed).
-            max_distance = 300  
+            max_distance = 1000  
             # Linearly interpolate: if min_distance == 0, factor is 5; if min_distance >= max_distance, factor is 1.
-            proximity_factor = 5 - 4 * (min_distance / max_distance)
-            # Clamp the factor between 1 and 5.
-            proximity_factor = max(1, min(5, proximity_factor))
+            proximity_factor = - 5 * (min_distance / max_distance)
+            #Clamp the factor 
+            proximity_factor = max(-5, min(0, proximity_factor))
         else:
-            proximity_factor = 1
-
-        # Combine the rewards: score, reward from coins, plus bonus from proximity.
-        reward = self.score + coins_reward + proximity_factor
+            proximity_factor = 0
+        proximity_factor /= 10
 
         # Check for level-end conditions.
         if self.player.rect.right >= 500:
@@ -362,20 +371,27 @@ class PlatformerEnv(gym.Env):
             self.player.rect.left = 120
             self.current_level.shift_world(diff)
 
-        current_position = self.player.rect.x + self.current_level.world_shift
-        if current_position < self.current_level.level_limit:
-            if self.current_level_no < len(self.level_list) - 1:
-                self.player.rect.x = 120
-                self.current_level_no += 1
-                self.current_level = self.level_list[self.current_level_no]
-                self.player.level = self.current_level
-            else:
-                self.done = True
+        #border factor
+        border_factor = 0
+        if self.player.rect.right >= self.current_level.level_limit_right:
+            border_factor = -10
+        if self.player.rect.left <= self.current_level.level_limit_left:
+            border_factor = -10
 
+
+        # Combine the rewards: reward from coins, plus bonus from proximity + border penalty
+        reward = coins_reward + proximity_factor + border_factor
+
+        self.total_reward += reward
+        self.total_cf += coins_reward
+        self.total_pf += proximity_factor
+        self.total_bf += border_factor
+
+        #print(f"p : {proximity_factor}, b: {border_factor}, c: {coins_reward}, s: {self.score}, r: {reward}")
         observation = self.render("rgb_array")
         info = {}
         if self.done:
-            info = {"episode": {"r": reward, "l": self.frame_count, "score": self.score}}
+            info = {"episode": {"r": self.total_reward, "l": self.frame_count, "score": self.score, "cf": self.total_cf, "pf": self.total_pf, "bf": self.total_bf}}
         return observation, reward, self.done, False, info
 
 
