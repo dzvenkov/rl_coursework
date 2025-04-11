@@ -4,8 +4,8 @@ import numpy as np
 
 # --- Main Loop (for running and displaying the game) ---
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = 400
+SCREEN_HEIGHT = 300
 
 def main():
     pygame.init()

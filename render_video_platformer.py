@@ -14,7 +14,7 @@ env = VecFrameStack(env, n_stack=4)
 
 # Load the trained model
 ##model = PPO.load("ppo_pong_final")
-model = PPO.load("snapshots/ppo_platformer_checkpoint_25000_steps")
+model = PPO.load("snapshots/ppo_platformer_checkpoint_900000_steps")
 #model = PPO("CnnPolicy", env)
 
 
@@ -37,7 +37,7 @@ while not done:
     # Take a step in the environment
     obs, reward, done, info = env.step(action)
     if (cnt % 100 == 0):
-        print("cnt: ", cnt)
+        print("frame: ", cnt)
     cnt += 1
 
 

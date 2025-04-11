@@ -13,6 +13,7 @@ class RollingAverageRewardCallback(BaseCallback):
             for info in infos:
                 # When using monitor or AtariWrapper, info sometimes contains an "episode" key with summary stats.
                 if "episode" in info.keys():
+                    #print (f'here: {infos}')
                     # Grab the episodic reward (e.g., info["episode"]["r"])
                     episode_reward = info["episode"]["r"]
                     self.episode_rewards.append(episode_reward)
@@ -22,5 +23,7 @@ class RollingAverageRewardCallback(BaseCallback):
                     # Compute the rolling average of the episode rewards
                     rolling_avg = sum(self.episode_rewards) / len(self.episode_rewards)
                     # Log the rolling average to TensorBoard under the tag 'roll_avg/episode_reward'
-                    self.logger.record("roll_avg/episode_reward", rolling_avg)
+                    self.logger.record("episode/roll_avg_reward", rolling_avg)
+                    self.logger.record("episode/reward", episode_reward)
+                    self.logger.record("episode/score",  info["episode"]["score"])
         return True

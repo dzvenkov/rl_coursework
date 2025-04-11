@@ -321,13 +321,38 @@ class PlatformerEnv(gym.Env):
         for coin in coins_collected:
             self.score += 1
             coins_reward += (600 - coin.rect.y) / 3  # Reward based on coin height.
+            # Spawn a new coin at a random position on a platform.
             platform = random.choice(self.current_level.platform_list.sprites())
             x = platform.rect.x + random.randint(10, max(10, platform.rect.width - 10))
             y = platform.rect.y - 25
             new_coin = Coin(x, y)
             self.current_level.coin_list.add(new_coin)
 
-        # Scrolling: shift the world if the player goes beyond boundaries.
+        # --- Add coin proximity reward factor ---
+        # Calculate the distance from the player to each coin still in the level.
+        coins = self.current_level.coin_list.sprites()
+        if coins:
+            # Compute Euclidean distances from the player's center to each coin.
+            distances = [
+                np.sqrt((self.player.rect.centerx - coin.rect.centerx)**2 +
+                        (self.player.rect.centery - coin.rect.centery)**2)
+                for coin in coins
+            ]
+            # Use the closest coin distance.
+            min_distance = min(distances)
+            # Set a maximum distance threshold (adjust as needed).
+            max_distance = 300  
+            # Linearly interpolate: if min_distance == 0, factor is 5; if min_distance >= max_distance, factor is 1.
+            proximity_factor = 5 - 4 * (min_distance / max_distance)
+            # Clamp the factor between 1 and 5.
+            proximity_factor = max(1, min(5, proximity_factor))
+        else:
+            proximity_factor = 1
+
+        # Combine the rewards: score, reward from coins, plus bonus from proximity.
+        reward = self.score + coins_reward + proximity_factor
+
+        # Check for level-end conditions.
         if self.player.rect.right >= 500:
             diff = self.player.rect.right - 500
             self.player.rect.right = 500
@@ -348,8 +373,11 @@ class PlatformerEnv(gym.Env):
                 self.done = True
 
         observation = self.render("rgb_array")
-        reward = self.score + coins_reward
-        return observation, reward, self.done, False, {"score": self.score}
+        info = {}
+        if self.done:
+            info = {"episode": {"r": reward, "l": self.frame_count, "score": self.score}}
+        return observation, reward, self.done, False, info
+
 
     def render(self, mode="rgb_array"):
         # Clear the offscreen surface.
