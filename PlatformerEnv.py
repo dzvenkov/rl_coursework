@@ -170,8 +170,28 @@ class Level(object):
                 coin = Coin(x, y)
                 self.coin_list.add(coin)
 
-
 class Level_01(Level):
+    def __init__(self, player):
+        Level.__init__(self, player)
+        self.level_limit_left = 300
+        self.level_limit_right = 1800
+        level = [[200, 50, 500, 600],
+                 # borders
+                 #[500, 1000, -300, 0],
+                 #[500, 1000, 1900, 0],
+                ]
+        for platform in level:
+            block = Platform(platform[0], platform[1])
+            block.rect.x = platform[2]
+            block.rect.y = platform[3]
+            block.player = self.player
+            self.platform_list.add(block)
+
+        self.spawn_coins_near_platforms()
+
+
+
+class Level_01_(Level):
     def __init__(self, player):
         Level.__init__(self, player)
         self.level_limit_left = 300
@@ -295,7 +315,7 @@ class PlatformerEnv(gym.Env):
         self.active_sprite_list.empty()
         self.active_sprite_list.add(self.player)
         self.frame_count = 0  # Reset frame counter
-        return self.render("rgb_array"), {}
+        return self.render("rgb_array")#, {}
 
     def step(self, action):
         # Increment frame counter.
@@ -374,9 +394,9 @@ class PlatformerEnv(gym.Env):
         #border factor
         border_factor = 0
         if self.player.rect.right >= self.current_level.level_limit_right:
-            border_factor = -10
+            border_factor = -1
         if self.player.rect.left <= self.current_level.level_limit_left:
-            border_factor = -10
+            border_factor = -1
 
 
         # Combine the rewards: reward from coins, plus bonus from proximity + border penalty

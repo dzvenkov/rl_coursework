@@ -5,6 +5,7 @@ class RollingAverageRewardCallback(BaseCallback):
         super().__init__(verbose)
         self.rolling_window = rolling_window  # Number of episodes to consider in the rolling average
         self.episode_rewards = []
+        self.count = 0;
 
     def _on_step(self) -> bool:
         # Get the infos dictionary that might have 'episode' key if an episode finished
@@ -25,5 +26,30 @@ class RollingAverageRewardCallback(BaseCallback):
                     # Log the rolling average to TensorBoard under the tag 'roll_avg/episode_reward'
                     self.logger.record("episode/roll_avg_reward", rolling_avg)
                     self.logger.record("episode/reward", episode_reward)
-                    self.logger.record("episode/score",  info["episode"]["score"])
+                    if "score" in info.get("episode", {}):
+                        self.logger.record("episode/score", info["episode"]["score"])
+                    else:
+                        # Optionally log an alternative value or warn about the missing key.
+                        self.logger.record("episode/score", -2)
+
+                    if "score" in info.get("episode", {}):
+                        self.logger.record("episode/cf", info["episode"]["cf"])
+                    else:
+                        # Optionally log an alternative value or warn about the missing key.
+                        self.logger.record("episode/cf", -2)
+                    if "score" in info.get("episode", {}):
+                        self.logger.record("episode/bf", info["episode"]["bf"])
+                    else:
+                        # Optionally log an alternative value or warn about the missing key.
+                        self.logger.record("episode/bf", -2)
+                    if "score" in info.get("episode", {}):
+                        
+                        self.logger.record("episode/pf", info["episode"]["pf"])
+                    else:
+                        # Optionally log an alternative value or warn about the missing key.
+                        self.logger.record("episode/pf", -2)
+
+#                        
+#                    self.logger.record("episode/counter",  self.count)
+                    self.count += 1
         return True
