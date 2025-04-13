@@ -9,35 +9,27 @@ from gymnasium.wrappers import FrameStack, TransformObservation
 import numpy as np
 
 
-from PlatformerEnv import PlatformerEnv
+from PlatformerEnv import PlatformerEnv, Step4Wrapper, Step5Wrapper
 from RollingAverageRewardCallback import RollingAverageRewardCallback
 from stable_baselines3.common.env_checker import check_env
 
 def make_env():
     env = PlatformerEnv(screen_w=800, screen_h=600, max_frames=1000)
+    #env = Step4Wrapper(env)
     env = AtariWrapper(env, clip_reward=False)
-    env = Monitor(env)  
+    #env = Monitor(env)  
     #env = FrameStack(env, num_stack=4)  
     env = FrameStack(env, num_stack=4)
     # Convert the LazyFrames into a concrete np.ndarray
     env = TransformObservation(env, lambda obs: np.squeeze(np.array(obs), axis=-1))
     env.observation_space = gym.spaces.Box(low=0, high=255, shape=(4, 84, 84), dtype=np.uint8)
-    return env
-
-def make_env2():
-    env = PlatformerEnv(screen_w=800, screen_h=600, max_frames=1000)
-    env = AtariWrapper(env, clip_reward=False)
-    env = SubprocVecEnv([make_env for _ in range(4)])
-    env = VecFrameStack(env, n_stack=4)
+    env = DummyVecEnv([lambda: env])
+    #env = Step4Wrapper(env)
     return env
 
 
 if __name__ == '__main__':
     env = make_env()  
-
-    print(env.reset()[0].shape)
-    check_env(env)  # Check if the environment follows Gymnasium API
-    #exit(0)
 
     # Checkpoint every 25k steps
     checkpoint_callback = CheckpointCallback(
@@ -52,6 +44,6 @@ if __name__ == '__main__':
 
     # Initialize and train DQN model
     model = DQN("CnnPolicy", env, verbose=1, tensorboard_log="./tensorboard_logs/")
-    model.learn(total_timesteps=1_000_000, callback=callback, tb_log_name="DQN_Platformer")
+    model.learn(total_timesteps=1_000_000, callback=callback, tb_log_name="DQN_Platformer", exploration_final_eps =0.075, exploration_fraction=0.4)
 
     model.save("dqn_platformer_final")

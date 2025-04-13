@@ -163,19 +163,21 @@ class Level(object):
             coin.rect.x += shift_x
 
     def spawn_coins_near_platforms(self):
+        i = 0
         for platform in self.platform_list:
-            if random.random() < 0.6:
+            if random.random() < 0.6 or i == 0:
+                i += 1
                 x = platform.rect.x + random.randint(10, platform.rect.width - 10)
-                y = platform.rect.y - 25
+                y = platform.rect.y - random.randint(25, 125)
                 coin = Coin(x, y)
                 self.coin_list.add(coin)
 
 class Level_01(Level):
     def __init__(self, player):
         Level.__init__(self, player)
-        self.level_limit_left = 300
-        self.level_limit_right = 1800
-        level = [[200, 50, 500, 600],
+        self.level_limit_left = 100
+        self.level_limit_right = 2100
+        level = [[350, 50, 500, 600],
                  # borders
                  #[500, 1000, -300, 0],
                  #[500, 1000, 1900, 0],
@@ -315,7 +317,7 @@ class PlatformerEnv(gym.Env):
         self.active_sprite_list.empty()
         self.active_sprite_list.add(self.player)
         self.frame_count = 0  # Reset frame counter
-        return self.render("rgb_array")#, {}
+        return self.render("rgb_array"), {}
 
     def step(self, action):
         # Increment frame counter.
@@ -355,7 +357,7 @@ class PlatformerEnv(gym.Env):
             # Spawn a new coin at a random position on a platform.
             platform = random.choice(self.current_level.platform_list.sprites())
             x = platform.rect.x + random.randint(10, max(10, platform.rect.width - 10))
-            y = platform.rect.y - 25
+            y = platform.rect.y - random.randint(10, 175)
             new_coin = Coin(x, y)
             self.current_level.coin_list.add(new_coin)
 
@@ -437,3 +439,15 @@ class PlatformerEnv(gym.Env):
 
     def close(self):
         pygame.quit()
+
+
+class Step4Wrapper(gym.Wrapper):
+    def step(self, action):
+        observation, reward, terminated, truncated, info = self.env.step(action)
+        done = terminated or truncated
+        return observation, reward, done, info
+
+class Step5Wrapper(gym.Wrapper):
+    def step(self, action):
+        observation, reward, done, info = self.env.step(action)
+        return observation, reward, done, False, info

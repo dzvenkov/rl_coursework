@@ -26,28 +26,10 @@ class RollingAverageRewardCallback(BaseCallback):
                     # Log the rolling average to TensorBoard under the tag 'roll_avg/episode_reward'
                     self.logger.record("episode/roll_avg_reward", rolling_avg)
                     self.logger.record("episode/reward", episode_reward)
-                    if "score" in info.get("episode", {}):
-                        self.logger.record("episode/score", info["episode"]["score"])
-                    else:
-                        # Optionally log an alternative value or warn about the missing key.
-                        self.logger.record("episode/score", -2)
-
-                    if "score" in info.get("episode", {}):
-                        self.logger.record("episode/cf", info["episode"]["cf"])
-                    else:
-                        # Optionally log an alternative value or warn about the missing key.
-                        self.logger.record("episode/cf", -2)
-                    if "score" in info.get("episode", {}):
-                        self.logger.record("episode/bf", info["episode"]["bf"])
-                    else:
-                        # Optionally log an alternative value or warn about the missing key.
-                        self.logger.record("episode/bf", -2)
-                    if "score" in info.get("episode", {}):
-                        
-                        self.logger.record("episode/pf", info["episode"]["pf"])
-                    else:
-                        # Optionally log an alternative value or warn about the missing key.
-                        self.logger.record("episode/pf", -2)
+                    self.logger.record("episode/score", info["episode"]["score"])
+                    self.logger.record("episode/cf", info["episode"]["cf"])
+                    self.logger.record("episode/bf", info["episode"]["bf"])
+                    self.logger.record("episode/pf", info["episode"]["pf"])
 
 #                        
 #                    self.logger.record("episode/counter",  self.count)
