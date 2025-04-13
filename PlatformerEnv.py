@@ -276,9 +276,7 @@ class PlatformerEnv(gym.Env):
 
         # Initialize game objects.
         self.player = Player(self.screen_h)
-        self.level_list = [Level_01(self.player)]  # More levels can be added.
-        self.current_level_no = 0
-        self.current_level = self.level_list[self.current_level_no]
+        self.current_level = Level_01(self.player)
         self.player.level = self.current_level
         self.player.rect.x = 340
         self.player.rect.y = self.screen_h - self.player.rect.height
@@ -307,8 +305,7 @@ class PlatformerEnv(gym.Env):
         self.total_cf = 0
         self.total_pf = 0
         self.total_bf = 0
-        self.current_level_no = 0
-        self.current_level = self.level_list[self.current_level_no]
+        self.current_level = Level_01(self.player)
         self.player.level = self.current_level
         self.player.rect.x = 340
         self.player.rect.y = self.screen_h - self.player.rect.height
@@ -396,8 +393,10 @@ class PlatformerEnv(gym.Env):
         #border factor
         border_factor = 0
         if self.player.rect.right >= self.current_level.level_limit_right:
+            print("right")
             border_factor = -1
         if self.player.rect.left <= self.current_level.level_limit_left:
+            print("left")
             border_factor = -1
 
 

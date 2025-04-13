@@ -43,7 +43,8 @@ if __name__ == '__main__':
     callback = CallbackList([checkpoint_callback, rolling_avg_callback])
 
     # Initialize and train DQN model
-    model = DQN("CnnPolicy", env, verbose=1, tensorboard_log="./tensorboard_logs/")
-    model.learn(total_timesteps=1_000_000, callback=callback, tb_log_name="DQN_Platformer", exploration_final_eps =0.075, exploration_fraction=0.4)
+    model = DQN("CnnPolicy", env, verbose=1, tensorboard_log="./tensorboard_logs/", 
+                exploration_final_eps =0.075, exploration_fraction=0.4, buffer_size=100000)
+    model.learn(total_timesteps=1_000_000, callback=callback, tb_log_name="DQN_Platformer")
 
     model.save("dqn_platformer_final")
