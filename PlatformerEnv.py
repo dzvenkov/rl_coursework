@@ -172,7 +172,7 @@ class Level(object):
                 coin = Coin(x, y)
                 self.coin_list.add(coin)
 
-class Level_01(Level):
+class Level_01_(Level):
     def __init__(self, player):
         Level.__init__(self, player)
         self.level_limit_left = 100
@@ -193,7 +193,7 @@ class Level_01(Level):
 
 
 
-class Level_01_(Level):
+class Level_01(Level):
     def __init__(self, player):
         Level.__init__(self, player)
         self.level_limit_left = 300
@@ -393,10 +393,8 @@ class PlatformerEnv(gym.Env):
         #border factor
         border_factor = 0
         if self.player.rect.right >= self.current_level.level_limit_right:
-            print("right")
             border_factor = -1
         if self.player.rect.left <= self.current_level.level_limit_left:
-            print("left")
             border_factor = -1
 
 

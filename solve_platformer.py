@@ -17,7 +17,7 @@ def make_env():
 
 if __name__ == '__main__':
 
-    #env = DummyVecEnv([lambda: env])
+   # env = DummyVecEnv([lambda: make_env()])
     env = SubprocVecEnv([make_env for _ in range(4)])
     env = VecFrameStack(env, n_stack=4)
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     checkpoint_callback = CheckpointCallback(
         save_freq=25_000,
         save_path="./snapshots/",
-        name_prefix="ppo_platformer_checkpoint"
+        name_prefix="ppo_platformer_checkpoint_2"
     )
 
     # Create our custom rolling average reward callback

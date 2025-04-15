@@ -22,9 +22,9 @@ def make_env():
     env.observation_space = gym.spaces.Box(low=0, high=255, shape=(4, 84, 84), dtype=np.uint8)
     return env
 
-experiment = "5a"
+experiment = "6_1M"
 
-env = PlatformerEnv(screen_w=800, screen_h=600, max_frames=1000)
+env = PlatformerEnv(screen_w=800, screen_h=600, max_frames=3600)
 root_env = env
 env = AtariWrapper(env, clip_reward=False)
 env = Monitor(env)  
@@ -37,7 +37,7 @@ env.observation_space = gym.spaces.Box(low=0, high=255, shape=(4, 84, 84), dtype
 ##model = PPO.load("ppo_pong_final")
 #model = PPO.load(f"ppo_platformer_checkpoint_{3}")
 #model = PPO("CnnPolicy", env)
-model = DQN.load(f"snapshots/dqn_platformer_checkpoint_200000_steps", buffer_size =0)
+model = DQN.load(f"snapshots/dqn_platformer_checkpoint_1000000_steps", buffer_size =0)
 
 # Reset the environment (gymnasium returns an observation and an info dict)
 obs, _ = env.reset()
