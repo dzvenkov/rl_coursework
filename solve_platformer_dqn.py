@@ -11,6 +11,8 @@ import numpy as np
 from PlatformerEnv import PlatformerEnv, Step4Wrapper, Step5Wrapper
 from RollingAverageRewardCallback import RollingAverageRewardCallback
 from stable_baselines3.common.env_checker import check_env
+from stable_baselines3.common.utils import get_linear_fn
+
 
 def make_env():
     env = PlatformerEnv(screen_w=800, screen_h=600, max_frames=1000)
@@ -29,6 +31,7 @@ def make_env():
 if __name__ == '__main__':
     env = make_env()
 
+
     # Checkpoint every 25k steps
     checkpoint_callback = CheckpointCallback(
         save_freq=25_000,
@@ -45,10 +48,20 @@ if __name__ == '__main__':
         model_path = sys.argv[1]
         print(f"Loading model from: {model_path}")
         model = DQN.load(model_path, env=env)
+        '''
+        model.exploration_final_eps = 0.075
+        model.exploration_fraction = 0.1
+        model.exploration_initial_eps = 0.25
+        model._exploration_schedule = get_linear_fn(
+            model.exploration_initial_eps,
+            model.exploration_final_eps,
+            model.exploration_fraction)
+            '''
+        
     else:
         model = DQN("CnnPolicy", env, verbose=1, tensorboard_log="./tensorboard_logs/",
                     exploration_final_eps=0.075, exploration_fraction=0.4, buffer_size=100000)
 
-    model.learn(total_timesteps=1_000_000, callback=callback, tb_log_name="DQN_Platformer")
+    model.learn(total_timesteps=2_000_000, callback=callback, tb_log_name="DQN_Platformer", reset_num_timesteps = False)
 
     model.save("dqn_platformer_final")
